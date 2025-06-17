@@ -1,0 +1,372 @@
+openapi: 3.1.1
+info:
+  title: SAT Suite Question Bank API (Unofficial)
+  version: 0.0.0
+  description: Unofficial SAT Suite Question Bank API Document
+
+servers:
+  - url: https://qbank-api.collegeboard.org/msreportingquestionbank-prod
+    description: SSQB Production
+  
+paths:
+  /questionbank/lookup:
+    get:
+      description: Get data used for construct a search
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookupData"
+
+  /questionbank/state-standards:
+    post:
+      description: Get state's standard IDs
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: List of standard IDs
+                items:
+                  $ref: "#/components/schemas/StandardID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stateCd:
+                  type: string
+                  description: Name of state in short
+                asmtId:
+                  type: integer
+                  description: Id of the assessment suite
+
+  /questionbank/digital/get-questions:
+    post:
+      description: Submit a search
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: List of question's metadata
+                items:
+                  $ref: "#/components/schemas/QuestionMeta"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                asmtEventId:
+                  type: integer
+                  description: Id of the assessment suite
+                test:
+                  type: integer
+                  description: Id of the test
+                domain:
+                  type: string
+                  description: List of scoring domains, seperated with comma
+
+  /questionbank/digital/get-question:
+    post:
+      description: Get data of a question
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionData"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                external_id:
+                  type: string
+                  description: External id of the question
+
+  /questionbank/pdf-download:
+    post:
+      description: Get PDF data (batch get question data)
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: List of data of question
+                items:
+                  $ref: "#/components/schemas/QuestionData"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                external_ids:
+                  type: array
+                  description: List of external ids of question
+                  items:
+                    type: string
+
+components:
+  schemas:
+    LookupData:
+      type: object
+      description: Data used for construct a search
+      properties:
+        lookupData:
+          type: object
+          properties:
+            assessment:
+              type: array
+              description: List of available assessment suites
+              items:
+                types: object
+                properties:
+                  text:
+                    type: string
+                    description: Name of the assessment suite
+                  id:
+                    type: string
+                    description: Id of the assessment suite
+                enum:
+                  - text: "SAT"
+                    id: "99"
+                  - text: "PSAT/NMSQT & PSAT 10"
+                    id: "100"
+                  - text: "PSAT 8/9"
+                    id: "102"
+            test:
+              type: array
+              description: List of tests
+              items:
+                types: object
+                properties:
+                  text:
+                    type: string
+                    description: Name of the test
+                  id:
+                    type: string
+                    description: Id of the test
+                enum:
+                  - text: "Reading and Writing"
+                    id: "1"
+                  - text: "Math"
+                    id: "2"
+            domain:
+              type: objects
+              description: Domain score
+              properties:
+                R&W:
+                  type: array
+                  description: Scoring domains in Reading and Writing test
+                  items:
+                    $ref: "#/components/schemas/DomainData"
+                Math:
+                  type: array
+                  description: Scoring domains in Math test
+                  items:
+                    $ref: "#/components/schemas/DomainData"
+            mathLiveItems:
+              type: array
+              description: List of external ids of active questions in Math test
+              items:
+                type: string
+                description: External id of the action question
+            readingLiveItems:
+              type: array
+              description: List of external ids of active questions in R&W test
+              items:
+                type: string
+                description: External id of the action question
+            stateOfferings:
+              type: array
+              description: List of standard IDs available states
+              items:
+                type: object
+                properties:
+                  stateCd:
+                    type: string
+                    description: Id of the state
+                  name:
+                    type: string
+                    description: Name of the state
+
+    DomainData:
+      type: object
+      description: Data of a scoring domain
+      properties:
+        text:
+          type: string
+          description: Name of the domain
+        id:
+          type: string
+          description: Id of the domain
+        primaryClassCd:
+          type: string
+          description: Domain name in short
+        skill:
+          type: array
+          description: Skills inside the domain
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+                description: Name of the skill
+              id:
+                type: string
+                description: Id of the skill
+
+    StandardID:
+      type: object
+      description: Data of a state standard ID
+      properties:
+        skillCd:
+          type: string
+          description: Skill name in short
+        stateStandards:
+          type: array
+          description: Standard IDs
+          items:
+            type: string
+
+    QuestionMeta:
+      type: object
+      description: Metadata of a question
+      properties:
+        updateDate:
+          type: integer
+          format: timestamp
+          description: Update time
+        pPcc:
+          type: string
+          description: (Unsure) <asmtCd>#<domainCd>
+        questionId:
+          type: string
+          description: Id of the question
+        skill_cd:
+          type: string
+          description: Name of the skill examined by the question in short
+        score_band_range_cd:
+          type: integer
+          description: (Unsure)
+        uId:
+          type: string
+          description: (Unsure)
+        skill_desc:
+          type: string
+          description: Skill description (name of the skill)
+        createDate:
+          type: integer
+          format: timestamp
+          description: Creation time
+        program:
+          type: string
+          description: Name of the assessment suite
+        primary_class_cd_desc:
+          type: string
+          description: Name of the scoring domain examined by the question
+        ibn:
+          type:
+            - 'null'
+            - string
+          description: (Unsure)
+        external_id:
+          type: string
+          description: External id of the question
+        primary_class_cd:
+          type: string
+          description: Name of the scoring domain examined by the question in short
+        difficulty:
+          type: string
+          description: Difficulty (E - Easy, M - Medium, H - Hard)
+          enum:
+            - "E"
+            - "M"
+            - "H"
+
+    QuestionData:
+      type: object
+      description: Data of a question
+      properties:
+        vaultid:
+          type: string
+          description: (Unsure)
+        keys:
+          type: array
+          description: Id of correct answer (MCQ) or correct answer (SPR)
+          items:
+            type: string
+        rationale:
+          type: string
+          description: Explanation in html format
+        origin:
+          type: string
+          description: (Unsure)
+        stem:
+          type: string
+          description: Question stem in html format
+        externalid:
+          type: string
+          description: External id of the question
+        stimulus:
+          type: string
+          description: Question Stimulus in html format
+        templateclusterid:
+          type:
+            - 'null'
+            - string
+          description: (Unsure)
+        parenttemplatename:
+          type:
+            - 'null'
+            - string
+          description: (Unsure)
+        parenttemplateid:
+          type:
+            - 'null'
+            - string
+          description: (Unsure)
+        type:
+          type: string
+          description: Type of the question
+        position:
+          type:
+            - 'null'
+            - string
+          description: (Unsure)
+        templateclustername:
+          type:
+            - 'null'
+            - string
+          description: (Unsure)
+        answerOptions:
+          type: array
+          description: MCQ answer options, from option A to option D
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Id of the answer option
+              content:
+                type: string
+                description: Answer option in html format
+        correct_answer:
+          type: array
+          description: List of correct answers in human readable format
+          items:
+            type: string
